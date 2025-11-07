@@ -19,7 +19,7 @@ public class GameManager : MonoBehaviour
         GameOver
     }
     public GameState CurrentState { get; private set; } = GameState.MainMenu;
-
+    // action так как сингтон
     public event Action<int> OnWaveStarted;
     public event Action<int> OnWaveCompleted;
     public event Action OnGameWin;
