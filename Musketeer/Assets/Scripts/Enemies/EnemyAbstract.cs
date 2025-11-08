@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using System;
 public abstract class EnemyAbstract : MonoBehaviour
 {
     [Header("Характеристики врага")]
@@ -7,9 +7,9 @@ public abstract class EnemyAbstract : MonoBehaviour
     public float currentHP;
     public float speed = 3f;
     public float currentSpeed;
-
     protected Transform playerTarget;
 
+    public Action<EnemyAbstract> OnDeath;
     protected virtual void Start()
     {
         playerTarget = FindAnyObjectByType<PlayerCannon>().transform;
@@ -29,6 +29,7 @@ public abstract class EnemyAbstract : MonoBehaviour
 
     protected virtual void KillEnemy()
     {
+        OnDeath?.Invoke(this);
         gameObject.SetActive(false);
     }
 
