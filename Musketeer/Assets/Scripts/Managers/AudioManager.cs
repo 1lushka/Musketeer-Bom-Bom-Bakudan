@@ -66,10 +66,6 @@ public class AudioManager : MonoBehaviour
         sfxDictionary = new Dictionary<SFX, AudioClip>();
         int enumCount = System.Enum.GetNames(typeof(SFX)).Length;
 
-        if (sfxClips == null || sfxClips.Length < enumCount)
-        {
-            Debug.LogWarning($"[AudioManager] Не хватает клипов! Ожидалось: {enumCount}, есть: {sfxClips?.Length ?? 0}");
-        }
 
         for (int i = 0; i < enumCount; i++)
         {
@@ -78,7 +74,7 @@ public class AudioManager : MonoBehaviour
             sfxDictionary[sound] = clip;
 
             if (clip == null)
-                Debug.LogError($"[AudioManager] Нет клипа для SFX: {sound}");
+                Debug.LogWarning($"[AudioManager] Нет звука для SFX: {sound}");
         }
     }
 
