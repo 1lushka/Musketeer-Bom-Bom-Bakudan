@@ -1,90 +1,105 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 [RequireComponent(typeof(Pool_Enemy))]
 public class WaveSpawner : MonoBehaviour
 {
-    [Header("Точка спавна")]
+    [Header("Спавн")]
     public Transform spawnCenter;
-
-    [Header("Параметры спавна")]
     public float lineLength = 30f;
-    
 
-    [Header("Волны")]
-    public int enemiesPerWave = 10;
-    public float timeBetweenWaves = 0f;
-    public float timeBetweenSpawns = 0.5f;
-
-    
+    [Header("Конфиг")]
+    public WaveConfig waveConfig;
 
     private Pool_Enemy _pool;
-    private int _currentWave = 0;
-    private int _enemiesAliveThisWave = 0;
+    private int _waveIndex = -1;
+    private int _alive = 0;
 
     private void Awake()
     {
         _pool = GetComponent<Pool_Enemy>();
         if (spawnCenter == null) spawnCenter = transform;
+
+        if (waveConfig == null)
+        {
+            enabled = false;
+            return;
+        }
+
+        _pool.PrewarmFromWaveConfig(waveConfig);
     }
 
     private void Start()
     {
-        StartCoroutine(WaveController());
+        StartCoroutine(RunWaves());
     }
 
-    private IEnumerator WaveController()
+    private IEnumerator RunWaves()
     {
-        while (true)
+        while (_waveIndex < waveConfig.waves.Count - 1)
         {
-            yield return new WaitUntil(() => _enemiesAliveThisWave == 0);
+            yield return new WaitUntil(() => _alive == 0);
 
-            if (_currentWave > 0)
+            if (_waveIndex >= 0)
+                yield return new WaitForSeconds(waveConfig.timeBetweenWaves);
+
+            _waveIndex++;
+            var wave = waveConfig.waves[_waveIndex];
+
+            var toSpawn = new List<EnemyAbstract>();
+
+            foreach (var rule in wave.enemies)
             {
-                yield return new WaitForSeconds(timeBetweenWaves);
+                if (rule.prefab == null) continue;
+                int count = Random.Range(rule.min, rule.max + 1);
+                for (int i = 0; i < count; i++)
+                    toSpawn.Add(rule.prefab);
             }
 
-            _currentWave++;
-            _enemiesAliveThisWave = enemiesPerWave;
+            _alive = toSpawn.Count;
+            if (_alive == 0) continue;
 
-            for (int i = 0; i < enemiesPerWave; i++)
+            
+            toSpawn = toSpawn
+                .OrderBy(e => wave.enemies.First(r => r.prefab == e).priority)
+                .ToList();
+
+            foreach (var prefab in toSpawn)
             {
-                SpawnEnemy();
-                yield return new WaitForSeconds(timeBetweenSpawns);
+                Spawn(prefab);
+                yield return new WaitForSeconds(waveConfig.timeBetweenSpawns);
             }
         }
+
+        yield return new WaitUntil(() => _alive == 0);
+        
     }
 
-    private void SpawnEnemy()
+    private void Spawn(EnemyAbstract prefab)
     {
-        EnemyAbstract enemy = _pool.GetEnemy();
-        if (enemy == null) return;
+        var enemy = _pool.GetEnemy(prefab);
+        if (!enemy)
+        {
+            _alive--;
+            return;
+        }
 
-        Vector3 spawnPos = GetSpawnPosition();
-        enemy.transform.position = spawnPos;
+        float x = Random.Range(-lineLength * 0.5f, lineLength * 0.5f);
+        enemy.transform.position = spawnCenter.position + new Vector3(x, 0, 0);
         enemy.transform.rotation = Quaternion.identity;
-
         enemy.currentHP = enemy.maxHP;
         enemy.currentSpeed = enemy.speed;
 
-        
-        enemy.OnDeath = null; 
-        enemy.OnDeath += OnEnemyDeath;
+        enemy.OnDeath = null;
+        enemy.OnDeath += Die;
     }
 
-    private void OnEnemyDeath(EnemyAbstract enemy)
+    private void Die(EnemyAbstract e)
     {
-        _enemiesAliveThisWave--;
-
-        _pool.ReturnEnemy(enemy);
-   
-        enemy.OnDeath -= OnEnemyDeath; //на всякий случай   
+        _alive--;
+        _pool.ReturnEnemy(e);
+        e.OnDeath -= Die;
     }
-
-    private Vector3 GetSpawnPosition()
-    {
-            float x = Random.Range(-lineLength * 0.5f, lineLength * 0.5f);
-            return spawnCenter.position + new Vector3(x, 0f, 0f);
-    }
-
 }

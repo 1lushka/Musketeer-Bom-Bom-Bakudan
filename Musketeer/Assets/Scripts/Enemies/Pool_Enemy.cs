@@ -1,44 +1,66 @@
-using System.Collections.Generic;
+п»їusing System.Collections.Generic;
 using UnityEngine;
-
 
 public class Pool_Enemy : MonoBehaviour
 {
-    [Header("Настройки пула")]
-    public EnemyAbstract enemyPrefab;       
-    public int poolSize = 20;                 
+    private readonly Dictionary<EnemyAbstract, Queue<EnemyAbstract>> _pools = new();
 
-    private Queue<EnemyAbstract> _pool = new Queue<EnemyAbstract>(); //решил даже реализоать через очердь
+    [Header("РќР°СЃС‚СЂРѕР№РєРё")]
+    public int defaultPoolSize = 20;
 
-    private void Awake()
+    public void PrewarmFromWaveConfig(WaveConfig config)
     {
-        for (int i = 0; i < poolSize; i++)
-        {
-            EnemyAbstract enemy = Instantiate(enemyPrefab, transform);
-            enemy.gameObject.SetActive(false);
-            _pool.Enqueue(enemy);
-        }
+        var seen = new HashSet<EnemyAbstract>();
+
+        foreach (var wave in config.waves)
+            foreach (var rule in wave.enemies)
+                if (rule.prefab && seen.Add(rule.prefab))
+                    if (!_pools.ContainsKey(rule.prefab))
+                        CreatePool(rule.prefab, defaultPoolSize);
     }
 
-    public EnemyAbstract GetEnemy()
+    public EnemyAbstract GetEnemy(EnemyAbstract prefab)
     {
-        if (_pool.Count == 0)
+        if (!prefab) return null;
+
+        if (!_pools.TryGetValue(prefab, out var q))
         {
-            EnemyAbstract enemy = Instantiate(enemyPrefab, transform); //расширяем пул если вышли за границы
-            enemy.gameObject.SetActive(false);
-            return enemy;
+            CreatePool(prefab, defaultPoolSize);
+            q = _pools[prefab];
         }
 
-        EnemyAbstract pooledEnemy = _pool.Dequeue();
-        pooledEnemy.gameObject.SetActive(true);
-        return pooledEnemy;
+        EnemyAbstract e = q.Count > 0 ? q.Dequeue() : Instantiate(prefab, transform);
+
+        e.gameObject.SetActive(true);
+        e.transform.SetParent(null);
+        return e;
     }
 
     public void ReturnEnemy(EnemyAbstract enemy)
     {
+        if (!enemy) return;
+
+        var prefab = enemy.GetComponent<EnemyAbstract>();
+        if (!prefab) prefab = enemy;
+
+        if (!_pools.TryGetValue(prefab, out var q))
+            CreatePool(prefab, 5);
+
         enemy.gameObject.SetActive(false);
         enemy.transform.SetParent(transform);
-        _pool.Enqueue(enemy);
+        enemy.transform.localPosition = Vector3.zero;
+        _pools[prefab].Enqueue(enemy);
     }
 
+    private void CreatePool(EnemyAbstract prefab, int size)
+    {
+        var q = new Queue<EnemyAbstract>();
+        _pools[prefab] = q;
+        for (int i = 0; i < size; i++)
+        {
+            var e = Instantiate(prefab, transform);
+            e.gameObject.SetActive(false);
+            q.Enqueue(e);
+        }
+    }
 }
