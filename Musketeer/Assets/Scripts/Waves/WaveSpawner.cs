@@ -1,4 +1,4 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,11 +6,8 @@ using System.Linq;
 [RequireComponent(typeof(Pool_Enemy))]
 public class WaveSpawner : MonoBehaviour
 {
-    [Header("—Ô‡‚Ì")]
     public Transform spawnCenter;
     public float lineLength = 30f;
-
-    [Header(" ÓÌÙË„")]
     public WaveConfig waveConfig;
 
     private Pool_Enemy _pool;
@@ -21,13 +18,7 @@ public class WaveSpawner : MonoBehaviour
     {
         _pool = GetComponent<Pool_Enemy>();
         if (spawnCenter == null) spawnCenter = transform;
-
-        if (waveConfig == null)
-        {
-            enabled = false;
-            return;
-        }
-
+        if (waveConfig == null) { enabled = false; return; }
         _pool.PrewarmFromWaveConfig(waveConfig);
     }
 
@@ -41,65 +32,83 @@ public class WaveSpawner : MonoBehaviour
         while (_waveIndex < waveConfig.waves.Count - 1)
         {
             yield return new WaitUntil(() => _alive == 0);
-
-            if (_waveIndex >= 0)
-                yield return new WaitForSeconds(waveConfig.timeBetweenWaves);
-
+            if (_waveIndex >= 0) yield return new WaitForSeconds(waveConfig.timeBetweenWaves);
             _waveIndex++;
             var wave = waveConfig.waves[_waveIndex];
-
             var toSpawn = new List<EnemyAbstract>();
-
-            foreach (var rule in wave.enemies)
+            foreach (var r in wave.enemies)
             {
-                if (rule.prefab == null) continue;
-                int count = Random.Range(rule.min, rule.max + 1);
-                for (int i = 0; i < count; i++)
-                    toSpawn.Add(rule.prefab);
+                if (r.prefab == null) continue;
+                int cnt = Random.Range(r.min, r.max + 1);
+                for (int i = 0; i < cnt; i++) toSpawn.Add(r.prefab);
             }
-
             _alive = toSpawn.Count;
             if (_alive == 0) continue;
-
-            
-            toSpawn = toSpawn
-                .OrderBy(e => wave.enemies.First(r => r.prefab == e).priority)
-                .ToList();
-
-            foreach (var prefab in toSpawn)
+            toSpawn = toSpawn.OrderBy(e => wave.enemies.First(x => x.prefab == e).priority).ToList();
+            foreach (var p in toSpawn)
             {
-                Spawn(prefab);
+                Spawn(p, true);
                 yield return new WaitForSeconds(waveConfig.timeBetweenSpawns);
             }
         }
-
         yield return new WaitUntil(() => _alive == 0);
-        
     }
 
-    private void Spawn(EnemyAbstract prefab)
+    private void Spawn(EnemyAbstract prefab, bool track)
     {
-        var enemy = _pool.GetEnemy(prefab);
-        if (!enemy)
+        var e = _pool.GetEnemy(prefab);
+        if (!e) { if (track) _alive--; return; }
+        float x = Random.Range(-lineLength * 0.5f, lineLength * 0.5f);
+        e.transform.position = spawnCenter.position + new Vector3(x, 0, 0);
+        e.transform.rotation = Quaternion.identity;
+        e.currentHP = e.maxHP;
+        e.currentSpeed = e.speed;
+        e.OnDeath = null;
+        if (track) e.OnDeath += _ => { _alive--; _pool.ReturnEnemy(e); };
+    }
+
+    public Coroutine StartBossAttack(
+        float interval,
+        System.Action onComplete = null,
+        params (EnemyAbstract prefab, int min, int max, int priority)[] enemies)
+    {
+        return StartCoroutine(BossCoroutine(interval, onComplete, enemies));
+    }
+
+    private IEnumerator BossCoroutine(
+        float interval,
+        System.Action onComplete,
+        (EnemyAbstract prefab, int min, int max, int priority)[] enemies)
+    {
+        if (enemies == null || enemies.Length == 0)
         {
-            _alive--;
-            return;
+            onComplete?.Invoke();
+            yield break;
         }
 
-        float x = Random.Range(-lineLength * 0.5f, lineLength * 0.5f);
-        enemy.transform.position = spawnCenter.position + new Vector3(x, 0, 0);
-        enemy.transform.rotation = Quaternion.identity;
-        enemy.currentHP = enemy.maxHP;
-        enemy.currentSpeed = enemy.speed;
+        var list = new List<EnemyAbstract>();
 
-        enemy.OnDeath = null;
-        enemy.OnDeath += Die;
-    }
+        foreach (var (prefab, min, max, _) in enemies)
+        {
+            if (prefab == null) continue;
+            int count = Random.Range(min, max + 1);
+            for (int i = 0; i < count; i++) list.Add(prefab);
+        }
 
-    private void Die(EnemyAbstract e)
-    {
-        _alive--;
-        _pool.ReturnEnemy(e);
-        e.OnDeath -= Die;
+        if (list.Count == 0)
+        {
+            onComplete?.Invoke();
+            yield break;
+        }
+
+        list = list.OrderBy(e => enemies.First(x => x.prefab == e).priority).ToList();
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            Spawn(list[i], false);
+            if (i < list.Count - 1) yield return new WaitForSeconds(interval);
+        }
+
+        onComplete?.Invoke();
     }
 }
