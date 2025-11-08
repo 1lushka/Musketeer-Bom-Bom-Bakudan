@@ -1,16 +1,32 @@
 using UnityEngine;
+using System.Collections.Generic;
 
-public class Poll_Bullet : MonoBehaviour
+public class Pool_Bullet : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [Header("Настройки пула")]
+    public GameObject bulletPrefab;
+    public int poolSize = 20;
+
+    private List<GameObject> bullets = new List<GameObject>();
+
+    private void Awake()
     {
-        
+        for (int i = 0; i < poolSize; i++)
+        {
+            GameObject bullet = Instantiate(bulletPrefab, transform);
+            bullet.SetActive(false);
+            bullets.Add(bullet);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    public GameObject GetBullet()
     {
-        
+        for (int i = 0; i < bullets.Count; i++)
+        {
+            if (!bullets[i].activeInHierarchy)
+                return bullets[i];
+        }
+
+        return null;
     }
 }
