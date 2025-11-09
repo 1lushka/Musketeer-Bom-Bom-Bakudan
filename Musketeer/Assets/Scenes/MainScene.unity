@@ -1375,6 +1375,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f196726055eb4f24486599f4507eb029, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  fadeImage: {fileID: 0}
+  fadeDuration: 1
 --- !u!4 &786116814
 Transform:
   m_ObjectHideFlags: 0
@@ -2215,6 +2217,7 @@ MonoBehaviour:
   startButton: {fileID: 1880858373}
   settingsButton: {fileID: 987786384}
   exitButton: {fileID: 608130346}
+  CloseSettingsButton: {fileID: 460595735}
   mainMenuPanel: {fileID: 1690002856}
   settingsPanel: {fileID: 2054828486}
 --- !u!114 &1377199628
@@ -2229,15 +2232,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf9f3bfa284bd4d40b7c65ef2f8494af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  masterVolumeSlider: {fileID: 2072101846}
-  musicVolumeSlider: {fileID: 380584396}
-  sfxVolumeSlider: {fileID: 1236418070}
+  masterSlider: {fileID: 2072101846}
+  musicSlider: {fileID: 380584396}
+  sfxSlider: {fileID: 1236418070}
+  masterText: {fileID: 1993778842}
+  musicText: {fileID: 1186950062}
+  sfxText: {fileID: 761808557}
   audioMixer: {fileID: 24100000, guid: a58dc690a0a7bce4985f5a4314d681ff, type: 2}
-  masterVolumeText: {fileID: 1993778842}
-  musicVolumeText: {fileID: 1186950062}
-  sfxVolumeText: {fileID: 761808557}
-  settingsPanelToggle: {fileID: 460595735}
-  sliderTransitionDuration: 0.2
 --- !u!1 &1429075945
 GameObject:
   m_ObjectHideFlags: 0

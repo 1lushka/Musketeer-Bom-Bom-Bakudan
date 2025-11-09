@@ -41,7 +41,7 @@ public class MainMenuUI : MonoBehaviour
 
     void LoadGame()
     {
-        GameManager.Instance.LoadLevel("GameScene"); 
+        GameManager.Instance.LoadLevelWithFade("GameScene"); 
     }
 
     void ShowMainMenu()
