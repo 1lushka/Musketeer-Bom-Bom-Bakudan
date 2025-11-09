@@ -44,4 +44,6 @@ public abstract class EnemyAbstract : MonoBehaviour
             currentSpeed * Time.deltaTime
         );
     }
+
+
 }

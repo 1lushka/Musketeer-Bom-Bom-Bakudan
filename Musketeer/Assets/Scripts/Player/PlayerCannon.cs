@@ -1,20 +1,24 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections;
 
 public class PlayerCannon : MonoBehaviour
 {
-    [Header("Ïàðàìåòðû ñòðåëüáû")]
+    [Header("ÐŸÐ°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ñ‹ ÑÑ‚Ñ€ÐµÐ»ÑŒÐ±Ñ‹")]
     public float shootCooldown = 0.5f;
     public Transform shootPoint;
 
-    [Header("Ïóë ñíàðÿäîâ")]
+    [Header("ÐŸÑƒÐ» ÑÐ½Ð°Ñ€ÑÐ´Ð¾Ð²")]
     public Pool_Bullet bulletPool;
 
-    [Header("UI è ñîñòîÿíèÿ")]
-    //public GameOverCanvas gameOverCanvas;
-    //public UIManager uiManager;
+    [Header("UI Ð¸ ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ñ")]
+    public LevelUI levelUI; 
 
     private bool canShoot = true;
+
+    private void Start()
+    {
+        levelUI?.SetReady();
+    }
 
     public void Shoot(Vector3 target)
     {
@@ -32,26 +36,29 @@ public class PlayerCannon : MonoBehaviour
     IEnumerator CooldownTimer()
     {
         canShoot = false;
-        float timer = shootCooldown;
+        levelUI?.SetCooldownStart();
 
+        float timer = shootCooldown;
         while (timer > 0)
         {
             timer -= Time.deltaTime;
-            //uiManager.UpdateCooldownUI(timer / shootCooldown);
+            levelUI?.SetCooldownProgress(1f - (timer / shootCooldown));
             yield return null;
         }
 
         canShoot = true;
-        //uiManager.UpdateCooldownUI(0f);
+        levelUI?.SetReady();
     }
 
     private void OnTriggerEnter(Collider other)
     {
         EnemyAbstract enemy = other.GetComponent<EnemyAbstract>();
-        if (enemy == null) enemy = other.GetComponentInParent<EnemyAbstract>();
+        if (enemy == null)
+            enemy = other.GetComponentInParent<EnemyAbstract>();
+
         if (enemy != null)
         {
-            //gameOverCanvas.Activate();
+            // gameOverCanvas.Activate();
         }
     }
 }

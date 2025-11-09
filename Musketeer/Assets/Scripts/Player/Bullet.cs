@@ -7,28 +7,30 @@ public class Bullet : MonoBehaviour
     public float damage = 10f;
     public float lifetime = 5f;
 
-    private Vector3 targetPosition;
-    private float spawnHeight;
+    private Vector3 moveDirection;
 
     public void Shoot(Vector3 target)
     {
-        spawnHeight = transform.position.y;
-        targetPosition = new Vector3(target.x, spawnHeight, target.z);
+        Vector3 flatTarget = new Vector3(target.x, transform.position.y, target.z);
+        moveDirection = (flatTarget - transform.position).normalized;
+
         gameObject.SetActive(true);
+
         CancelInvoke();
         Invoke(nameof(Deactivate), lifetime);
     }
 
     private void Update()
     {
-        Vector3 direction = (targetPosition - transform.position).normalized;
-        transform.position += direction * speed * Time.deltaTime;
+        transform.position += moveDirection * speed * Time.deltaTime;
     }
 
     private void OnTriggerEnter(Collider other)
     {
         EnemyAbstract enemy = other.GetComponent<EnemyAbstract>();
-        if (enemy == null) enemy = other.GetComponentInParent<EnemyAbstract>();
+        if (enemy == null)
+            enemy = other.GetComponentInParent<EnemyAbstract>();
+
         if (enemy != null)
         {
             enemy.TakeDamage(damage);
