@@ -9,7 +9,7 @@ public class MainMenuUI : MonoBehaviour
     public Button startButton;
     public Button settingsButton;
     public Button exitButton;
-
+    public Button CloseSettingsButton;
     [Header("Панели")]
     public GameObject mainMenuPanel;
     public GameObject settingsPanel;
@@ -19,13 +19,13 @@ public class MainMenuUI : MonoBehaviour
         startButton?.onClick.AddListener(StartGame);
         settingsButton?.onClick.AddListener(OpenSettings);
         exitButton?.onClick.AddListener(ExitGame);
-
+        CloseSettingsButton?.onClick.AddListener(ShowMainMenu);
         ShowMainMenu();
     }
 
     void StartGame()
     {
-        LoadGameWithFade();
+        LoadGame();
     }
 
     void OpenSettings()
@@ -39,7 +39,7 @@ public class MainMenuUI : MonoBehaviour
         GameManager.Instance.QuitGame();
     }
 
-    void LoadGameWithFade()
+    void LoadGame()
     {
         GameManager.Instance.LoadLevel("GameScene"); 
     }
