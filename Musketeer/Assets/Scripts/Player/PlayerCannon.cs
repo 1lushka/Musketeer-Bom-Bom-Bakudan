@@ -11,7 +11,8 @@ public class PlayerCannon : MonoBehaviour
     public Pool_Bullet bulletPool;
 
     [Header("UI и состояния")]
-    public LevelUI levelUI; 
+    public LevelUI levelUI;
+    public GameOverCanvas gameOverCanvas;
 
     private bool canShoot = true;
 
@@ -58,7 +59,7 @@ public class PlayerCannon : MonoBehaviour
 
         if (enemy != null)
         {
-            // gameOverCanvas.Activate();
+            gameOverCanvas.Activate();
         }
     }
 }
